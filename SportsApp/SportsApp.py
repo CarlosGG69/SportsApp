@@ -6,8 +6,9 @@ from datetime import datetime
 
 # --- Auth with Google Sheets ---
 scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("/Users/carlosgallegogarcia/Downloads/SportsApp/sportsapp-472917-7d3a6c395a80.json", scope)
-client = gspread.authorize(creds)
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    st.secrets["gcp_service_account"], scope
+)client = gspread.authorize(creds)
 
 # --- Open sheet ---
 SHEET_NAME = "Database"
