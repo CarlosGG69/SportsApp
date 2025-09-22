@@ -12,31 +12,90 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict(
 
 client = gspread.authorize(creds)
 
-# --- Open sheet ---
-SHEET_NAME = "Database"
-spreadsheet = client.open(SHEET_NAME).sheet1
+# --- Open spreadsheets ---
+weights_sheet = client.open("Database").sheet1
+runs_sheet = client.open("Running Log").sheet1
 
-st.title("🏋️ My Sports Log (Google Sheets)")
+# --- Initialize session state ---
+if "page" not in st.session_state:
+    st.session_state.page = "home"
+if "start_time" not in st.session_state:
+    st.session_state.start_time = None
+if "elapsed" not in st.session_state:
+    st.session_state.elapsed = timedelta(0)
 
-# --- Form for logging ---
-with st.form("log_form"):
-    date = st.date_input("Date", datetime.today())
-    exercise = st.text_input("Exercise")
-    weight = st.number_input("Weight (kg)", min_value=0.0, step=1.0)
-    reps = st.number_input("Reps", min_value=0, step=1)
-    time = st.text_input("Time (e.g. 00:25:30)")
-    submitted = st.form_submit_button("Save Entry")
+# --- Navigation ---
+if st.session_state.page == "home":
+    st.title("🏋️🏃 Mi Entrenamiento")
 
-    if submitted:
-        spreadsheet.append_row([str(date), exercise, weight, reps, time])
-        st.success("✅ Entry saved to Google Sheets!")
+    col1, col2 = st.columns(2)
 
-# --- Load data for analysis ---
-data = spreadsheet.get_all_records()
-df = pd.DataFrame(data)
+    with col1:
+        if st.button("🏋️ Pesas", use_container_width=True):
+            st.session_state.page = "weights"
+            st.experimental_rerun()
 
-st.subheader("📊 Training History")
-st.dataframe(df)
+    with col2:
+        if st.button("🏃 Carrera", use_container_width=True):
+            st.session_state.page = "runs"
+            st.experimental_rerun()
 
-if not df.empty:
-    st.line_chart(df.groupby("date")["weight"].mean())
+# --- Pesas page ---
+elif st.session_state.page == "weights":
+    st.title("🏋️ Registro de Pesas")
+
+    with st.form("weights_form"):
+        date = st.date_input("Fecha", datetime.today())
+        exercise = st.text_input("Ejercicio")
+        weight = st.number_input("Peso (kg)", min_value=0.0, step=1.0)
+        reps = st.number_input("Reps", min_value=0, step=1)
+        submitted = st.form_submit_button("Guardar Pesas")
+
+        if submitted:
+            weights_sheet.append_row([str(date), exercise, weight, reps])
+            st.success("✅ Guardado en Google Sheets!")
+
+    data = pd.DataFrame(weights_sheet.get_all_records())
+    if not data.empty:
+        st.subheader("📊 Historial de Pesas")
+        st.dataframe(data)
+        st.line_chart(data.set_index("date")["weight"])
+
+    if st.button("⬅ Volver al inicio"):
+        st.session_state.page = "home"
+        st.experimental_rerun()
+
+# --- Carrera page ---
+elif st.session_state.page == "runs":
+    st.title("🏃 Cronómetro de Carrera")
+
+    # Start button
+    if st.session_state.start_time is None:
+        if st.button("▶️ Start"):
+            st.session_state.start_time = datetime.now()
+            st.session_state.elapsed = timedelta(0)
+            st.experimental_rerun()
+    else:
+        # Show elapsed time
+        st.write(f"⏱ Tiempo: {datetime.now() - st.session_state.start_time + st.session_state.elapsed}")
+
+        # Stop button
+        if st.button("⏹ Stop"):
+            st.session_state.elapsed = datetime.now() - st.session_state.start_time
+            st.session_state.start_time = None
+
+            # Ask for distance
+            distance = st.number_input("Distancia (km)", min_value=0.0, step=0.1)
+            if st.button("Guardar Carrera"):
+                runs_sheet.append_row([str(datetime.today().date()), distance, str(st.session_state.elapsed)])
+                st.success("✅ Carrera guardada en Google Sheets!")
+
+    data = pd.DataFrame(runs_sheet.get_all_records())
+    if not data.empty:
+        st.subheader("📊 Historial de Carreras")
+        st.dataframe(data)
+        st.line_chart(data.set_index("date")["distance"])
+
+    if st.button("⬅ Volver al inicio"):
+        st.session_state.page = "home"
+        st.experimental_rerun()
