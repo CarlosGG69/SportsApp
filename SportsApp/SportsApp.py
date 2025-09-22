@@ -2,7 +2,7 @@ import streamlit as st
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- Auth with Google Sheets ---
 scope = ["https://spreadsheets.google.com/feeds","https://www.googleapis.com/auth/drive"]
