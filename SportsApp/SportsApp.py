@@ -33,12 +33,12 @@ if st.session_state.page == "home":
     with col1:
         if st.button("🏋️ Pesas", use_container_width=True):
             st.session_state.page = "weights"
-            st.experimental_rerun()
+            st.rerun()
 
     with col2:
         if st.button("🏃 Carrera", use_container_width=True):
             st.session_state.page = "runs"
-            st.experimental_rerun()
+            st.rerun()
 
 # --- Pesas page ---
 elif st.session_state.page == "weights":
@@ -63,7 +63,7 @@ elif st.session_state.page == "weights":
 
     if st.button("⬅ Volver al inicio"):
         st.session_state.page = "home"
-        st.experimental_rerun()
+        st.rerun()
 
 # --- Carrera page ---
 elif st.session_state.page == "runs":
@@ -74,7 +74,7 @@ elif st.session_state.page == "runs":
         if st.button("▶️ Start"):
             st.session_state.start_time = datetime.now()
             st.session_state.elapsed = timedelta(0)
-            st.experimental_rerun()
+            st.rerun()
     else:
         # Show elapsed time
         st.write(f"⏱ Tiempo: {datetime.now() - st.session_state.start_time + st.session_state.elapsed}")
@@ -98,4 +98,4 @@ elif st.session_state.page == "runs":
 
     if st.button("⬅ Volver al inicio"):
         st.session_state.page = "home"
-        st.experimental_rerun()
+        st.rerun()
